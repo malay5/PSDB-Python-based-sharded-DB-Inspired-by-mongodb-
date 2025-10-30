@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package database;
+
+service DatabaseService {
+    // Database management
+    rpc CreateDatabase (DatabaseName) returns (OperationResponse);
+    rpc UseDatabase (DatabaseName) returns (OperationResponse);
+    rpc ListDatabases (Empty) returns (DatabaseList);
+    rpc DeleteDatabase (DatabaseName) returns (OperationResponse);
+    // Worker registration
+    rpc RegisterWorker (Worker) returns (OperationResponse);
+    
+    // Document operations
+    rpc CreateDocument (DocumentRequest) returns (DocumentID);
+    rpc ReadDocument (DocumentID) returns (DocumentResponse);
+    rpc ReadAllDocuments (DatabaseName) returns (DocumentList);
+    rpc QueryDocuments (QueryRequest) returns (DocumentList);
+    rpc UpdateDocument (UpdateRequest) returns (OperationResponse);
+    rpc DeleteDocument (DeleteRequest) returns (OperationResponse);
+    rpc ClearDatabase (DatabaseName) returns (OperationResponse);
+
+    rpc GetLoadInfo (Empty) returns (LoadInfo);
+    rpc DecrementReplicaCount (Worker) returns (OperationResponse);
+
+
+    // Shard management
+    rpc GetShardLocations (DatabaseName) returns (WorkerList);
+    rpc GetPrimaryWorker (DatabaseName) returns (Worker);  // New RPC
+
+    // ... existing RPCs ...
+    rpc ListWorkers (Empty) returns (WorkerList);
+
+    // Replication
+    rpc ReplicateDocument (ReplicateRequest) returns (OperationResponse);
+    rpc GetDocumentLocation (DocumentID) returns (Worker);
+    rpc GetDocumentReplicas (DocumentID) returns (WorkerList);  // Add this line
+
+    // Primary management (NEW)
+    rpc GetDocumentPrimary (DocumentID) returns (Worker);
+    rpc SetDocumentPrimary (SetPrimaryRequest) returns (OperationResponse);  // Optional
+    // Heartbeat mechanism (NEW)
+    rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse);
+
+}
+
+// NEW message for heartbeat
+message HeartbeatRequest {
+    string worker_address = 1;
+    int64 timestamp = 2;  // Unix timestamp in seconds
+}
+
+message HeartbeatResponse {
+    bool acknowledged = 1;
+}
+
+// NEW message for primary management
+message SetPrimaryRequest {
+    string db_name = 1;
+    string doc_id = 2;
+    string worker_address = 3;
+}
+
+message LoadInfo {
+    int32 replica_count = 1;
+}
+
+message ReplicateRequest {
+    string db_name = 1;
+    string doc_id = 2;
+    string document = 3;
+    bool is_update = 4;
+}
+
+message Empty {}
+
+message DatabaseName {
+    string name = 1;
+}
+
+message DatabaseList {
+    repeated string names = 1;
+}
+
+message DocumentRequest {
+    string db_name = 1;
+    string document = 2;  // JSON string
+    optional string doc_id = 3;
+}
+
+message DocumentID {
+    string db_name = 1;
+    string doc_id = 2;
+}
+
+message DocumentResponse {
+    string document = 1;  // JSON string
+}
+
+message DocumentList {
+    repeated string documents = 1;  // JSON strings
+}
+
+message QueryRequest {
+    string db_name = 1;
+    string filter_expr = 2;
+}
+
+message UpdateRequest {
+    string db_name = 1;
+    string doc_id = 2;
+    string updates = 3;  // JSON string
+    bool create_if_missing = 4;
+}
+
+message DeleteRequest {
+    string db_name = 1;
+    string doc_id = 2;
+}
+
+message OperationResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message WorkerList {
+    repeated string workers = 1;
+}
+
+message Worker {  // New message type
+    string worker = 1;
+}

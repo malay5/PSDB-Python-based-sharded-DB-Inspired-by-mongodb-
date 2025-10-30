@@ -1,0 +1,28 @@
+#For redis server :
+C:\Users\purva>redis-cli
+127.0.0.1:6379> SET test "hello"
+OK
+127.0.0.1:6379> GET test
+"hello"
+127.0.0.1:6379>
+
+#For CLI terminals
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. database.proto
+python master.py --node-id master1 --raft-port 50060 --service-port 50050 --peers master2:localhost:50051 master3:localhost:50052
+python master.py --node-id master2 --raft-port 50061 --service-port 50051 --peers master1:localhost:50050 master3:localhost:50052
+python master.py --node-id master3 --raft-port 50062 --service-port 50052 --peers master1:localhost:50050 master2:localhost:50051
+python worker.py 60050 localhost:50050 localhost:50051 localhost:50052
+python worker.py 60051 localhost:50050 localhost:50051 localhost:50052
+python worker.py 60052 localhost:50050 localhost:50051 localhost:50052
+python client.py --master localhost:50050
+
+
+
+
+#For query commands from clint side :
+query "lambda doc: 'age' in doc and doc['age'] < 35"
+query "lambda doc: doc.get('age') == 34"
+query "lambda doc: doc.get('name') == 'pina'"
+query "lambda doc: doc['age'] == 30"
+
+

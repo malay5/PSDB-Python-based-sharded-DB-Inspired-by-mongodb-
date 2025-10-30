@@ -1,0 +1,5 @@
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. database.proto
+python worker.py 50051
+python worker.py 50052
+python master.py
+python client.py

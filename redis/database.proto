@@ -1,0 +1,171 @@
+syntax = "proto3";
+package database;
+ 
+service DatabaseService {
+  // Raft RPCs
+  rpc RequestVote (VoteRequest) returns (VoteResponse);
+  rpc AppendEntries (AppendEntriesRequest) returns (AppendEntriesResponse);
+  // Master/Worker RPCs
+  rpc GetLeader (Empty) returns (LeaderInfo);
+  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse);
+  rpc AddWorker (Worker) returns (OperationResponse);
+  rpc InstallSnapshot (InstallSnapshotRequest) returns (InstallSnapshotResponse);
+  
+  rpc ListWorkers (Empty) returns (WorkerList);
+  rpc GetDocumentReplicas (DocumentID) returns (WorkerList);
+  rpc DecrementReplicaCount (Worker) returns (OperationResponse);
+  rpc CreateDatabase (DatabaseName) returns (OperationResponse);
+  rpc UseDatabase (DatabaseName) returns (OperationResponse);
+  rpc ListDatabases (Empty) returns (DatabaseList);
+  rpc GetPrimaryWorker (DatabaseName) returns (Worker);  // New RPC
+  rpc DeleteDatabase (DatabaseName) returns (OperationResponse);
+  rpc CreateDocument (DocumentRequest) returns (DocumentID);
+  rpc ReplicateDocument (ReplicateRequest) returns (OperationResponse);
+  rpc ReadDocument (DocumentID) returns (DocumentResponse);
+  rpc ReadAllDocuments (DatabaseName) returns (DocumentList);
+  rpc QueryDocuments (QueryRequest) returns (DocumentList);
+  rpc UpdateDocument (UpdateRequest) returns (OperationResponse);
+  rpc DeleteDocument (DeleteRequest) returns (OperationResponse);
+  rpc ClearDatabase (DatabaseName) returns (OperationResponse);
+  rpc GetShardLocations (DatabaseName) returns (WorkerList);
+  rpc GetLoadInfo (Empty) returns (LoadInfo);
+  rpc GetDocumentPrimary (DocumentID) returns (Worker);
+  rpc SetDocumentPrimary (SetPrimaryRequest) returns (OperationResponse);
+  rpc GetDocumentLocation (DocumentID) returns (Worker);
+}
+
+message Empty {}
+
+// Add this new message type
+message SetPrimaryRequest {
+  string db_name = 1;
+  string doc_id = 2;
+  string worker_address = 3;
+}
+
+message InstallSnapshotRequest {
+  int32 term = 1;
+  string leader_id = 2;
+  int32 last_included_index = 3;
+  int32 last_included_term = 4;
+  bytes data = 5;
+}
+
+message InstallSnapshotResponse {
+  int32 term = 1;
+  bool success = 2;
+}
+
+message LogEntry {
+  int32 term = 1;
+  int32 index = 2;
+  bytes data = 3;
+}
+
+
+message VoteRequest {
+  int32 term = 1;
+  string candidate_id = 2;
+  int32 last_log_index = 3;
+  int32 last_log_term = 4;
+  bool is_pre_vote=5;
+}
+
+message VoteResponse {
+  int32 term = 1;
+  bool vote_granted = 2;
+}
+
+message AppendEntriesRequest {
+  int32 term = 1;
+  string leader_id = 2;
+  int32 prev_log_index = 3;
+  int32 prev_log_term = 4;
+  repeated LogEntry entries = 5;
+  int32 leader_commit = 6;
+}
+
+message AppendEntriesResponse {
+  int32 term = 1;
+  bool success = 2;
+}
+
+message LeaderInfo {
+  string leader_id = 1;
+  string leader_address = 2;
+}
+
+message HeartbeatRequest {
+  string worker_address = 1;
+}
+
+message HeartbeatResponse {
+  bool acknowledged = 1;
+}
+
+message Worker {
+  string worker = 1;
+}
+
+message OperationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message WorkerList {
+  repeated string workers = 1;
+}
+
+message DatabaseName {
+  string name = 1;
+}
+
+message DatabaseList {
+  repeated string names = 1;
+}
+
+message DocumentID {
+  string db_name = 1;
+  string doc_id = 2;
+}
+
+message DocumentRequest {
+  string db_name = 1;
+  string document = 2;
+  string doc_id = 3;  // Optional, if empty a UUID will be generated
+}
+
+message ReplicateRequest {
+  string db_name = 1;
+  string doc_id = 2;
+  string document = 3;
+  bool is_update=4;
+}
+
+message DocumentResponse {
+  string document = 1;
+}
+
+message QueryRequest {
+  string db_name = 1;
+  string filter_expr = 2;
+}
+
+message DocumentList {
+  repeated string documents = 1;
+}
+
+message UpdateRequest {
+  string db_name = 1;
+  string doc_id = 2;
+  string updates = 3;
+}
+
+message DeleteRequest {
+  string db_name = 1;
+  string doc_id = 2;
+}
+
+message LoadInfo {
+  int32 replica_count = 1;
+}
