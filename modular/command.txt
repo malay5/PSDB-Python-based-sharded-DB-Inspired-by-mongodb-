@@ -21,7 +21,7 @@ query "lambda doc: doc.name == 'pina'"
 query "lambda doc: doc['age'] == 30"
 
 #For redis:
-C:\Users\purva>redis-cli
+C:\Users\>redis-cli
 127.0.0.1:6379> SET test "hello"
 OK
 127.0.0.1:6379> GET test
